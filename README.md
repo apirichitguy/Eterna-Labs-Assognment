@@ -25,7 +25,7 @@ I implemented **market orders** to demonstrate the full execution lifecycle and 
 ## Quickstart (local)
 1. Clone and install:
 ```bash
-git clone https://github.com/apirichitguy/EternaLabs.git
+git clone https://github.com/apirichitguy/Eterna-Labs-Assignment.git
 cd EternaLabs
 npm install
 ```
