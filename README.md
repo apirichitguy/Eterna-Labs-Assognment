@@ -1,9 +1,9 @@
 # Order Execution Engine — Mock Implementation
 
-🔗 **GitHub Repository**: https://github.com/SanyamBK/EternaLabs  
+🔗 **GitHub Repository**: https://github.com/apirichitguy/Eterna-Labs-Assignment  
 🚀 **Live Deployment**: https://eternalabs-production.up.railway.app  
 🎮 **Interactive Demo**: https://eternalabs-production.up.railway.app/demo  
-📺 **Demo Video**: https://youtu.be/SGaKzuuAVn4
+📺 **Demo Video**: https://youtu.be/CgMwlznyfMM
 
 ## Overview
 This repository implements a mock order execution engine for a single order type (market orders by default) with DEX routing, real-time WebSocket status updates, and an order processing queue. The DEX router simulates Raydium and Meteora with realistic network delays and price variance.
@@ -110,7 +110,3 @@ curl -X POST https://eternalabs-production.up.railway.app/api/orders/execute \
 * Integrate `@raydium-io/raydium-sdk-v2` and Meteora SDK.
 * Add wallet signing, devnet faucet, and transaction confirmation flows.
 * Implement rate limiting and authentication.
-
-## Contact
-
-Sanyam Barwar — [sanyam22447@iiitd.ac.in](mailto:sanyam22447@iiitd.ac.in)
