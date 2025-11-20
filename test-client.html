@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Order Execution Engine - Test Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .form-group {
+            margin: 15px 0;
+        }
+
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+
+        input {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            min-height: 100px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        .status {
+            padding: 5px 10px;
+            margin: 5px 0;
+            border-left: 4px solid #ccc;
+            background: #f9f9f9;
+        }
+
+        .status.pending {
+            border-color: #ffc107;
+        }
+
+        .status.routing {
+            border-color: #17a2b8;
+        }
+
+        .status.building {
+            border-color: #007bff;
+        }
+
+        .status.submitted {
+            border-color: #6f42c1;
+        }
+
+        .status.confirmed {
+            border-color: #28a745;
+        }
+
+        .status.failed {
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚀 Order Execution Engine - Test Client</h1>
+
+    <div class="form-group">
+        <label>Token In:</label>
+        <input type="text" id="tokenIn" value="SOL" />
+    </div>
+
+    <div class="form-group">
+        <label>Token Out:</label>
+        <input type="text" id="tokenOut" value="USDC" />
+    </div>
+
+    <div class="form-group">
+        <label>Amount:</label>
+        <input type="number" id="amountIn" value="1.5" step="0.1" />
+    </div>
+
+    <div class="form-group">
+        <label>User ID:</label>
+        <input type="text" id="userId" value="test-user" />
+    </div>
+
+    <button onclick="submitOrder()">Submit Order</button>
+    <button onclick="clearOutput()">Clear Output</button>
+
+    <div id="output">Ready to submit orders...</div>
+
+    <script>
+        let ws = null;
+        let currentOrderId = null;
+
+        function log(message, status = '') {
+            const output = document.getElementById('output');
+            const statusClass = status ? `status ${status}` : '';
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div class="${statusClass}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = 'Ready to submit orders...';
+        }
+
+        async function submitOrder() {
+            const order = {
+                tokenIn: document.getElementById('tokenIn').value,
+                tokenOut: document.getElementById('tokenOut').value,
+                amountIn: parseFloat(document.getElementById('amountIn').value),
+                userId: document.getElementById('userId').value
+            };
+
+            log(`📤 Submitting order: ${order.amountIn} ${order.tokenIn} → ${order.tokenOut}`);
+
+            try {
+                // Submit via HTTP POST
+                const response = await fetch('http://localhost:3000/api/orders/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(order)
+                });
+
+                const result = await response.json();
+                currentOrderId = result.orderId;
+                log(`✅ Order created: ${result.orderId}`);
+                log(`🔌 Connecting to WebSocket for real-time updates...`);
+
+                // Connect to WebSocket for real-time updates
+                connectWebSocket(result.orderId);
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'failed');
+            }
+        }
+
+        function connectWebSocket(orderId) {
+            if (ws) {
+                ws.close();
+            }
+
+            ws = new WebSocket('ws://localhost:3000/api/orders/execute');
+
+            ws.onopen = () => {
+                log(`🔗 WebSocket connected`);
+                // Subscribe to order updates
+                ws.send(JSON.stringify({ subscribeOrderId: orderId }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.subscribed) {
+                    log(`👂 Subscribed to order: ${data.subscribed}`);
+                }
+                else if (data.status) {
+                    const status = data.status;
+                    let message = `📊 Status: ${status.toUpperCase()}`;
+
+                    if (data.chosenDex) {
+                        message += ` | DEX: ${data.chosenDex}`;
+                    }
+                    if (data.quote) {
+                        message += ` | Quote: ${data.quote.price} (expected: ${data.quote.expectedOut})`;
+                    }
+                    if (data.txHash) {
+                        message += ` | TX: ${data.txHash} | Price: ${data.executedPrice}`;
+                    }
+                    if (data.error) {
+                        message += ` | Error: ${data.error}`;
+                    }
+
+                    log(message, status);
+                }
+                else if (data.error) {
+                    log(`❌ Error: ${data.error}`, 'failed');
+                }
+            };
+
+            ws.onerror = (error) => {
+                log(`❌ WebSocket error`, 'failed');
+            };
+
+            ws.onclose = () => {
+                log(`🔌 WebSocket disconnected`);
+            };
+        }
+    </script>
+</body>
+
+</html>
