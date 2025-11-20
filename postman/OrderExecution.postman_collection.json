@@ -1,0 +1,35 @@
+{
+  "info": {
+    "name": "OrderExecution",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Submit Order (POST)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:3000/api/orders/execute", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["api", "orders", "execute"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"userId\":\"sanyam\",\"type\":\"market\",\"tokenIn\":\"USDC\",\"tokenOut\":\"SOL\",\"amountIn\":10}"
+        }
+      }
+    },
+    {
+      "name": "WS Subscribe (instructions)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "ws://localhost:3000/api/orders/execute", "protocol": "ws", "host": ["localhost"], "port": "3000", "path": ["api", "orders", "execute"] }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": { "exec": ["// After connecting via WebSocket client send: { \"subscribeOrderId\": \"<ORDER_ID>\" }"], "type": "text/javascript" }
+        }
+      ]
+    }
+  ]
+}
